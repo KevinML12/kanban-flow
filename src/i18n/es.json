@@ -1,0 +1,15 @@
+{
+  "details": "Detalles",
+  "selectTaskPrompt": "Haz clic en una tarea para ver sus detalles.",
+  "noSubtasks": "Sin subtareas.",
+  "assigned": "Asignados",
+  "tags": "Etiquetas",
+  "priority": "Prioridad",
+  "due": "Vence",
+  "progress": "Progreso",
+  "projects": "Proyectos",
+  "kanban": "Tablero Kanban",
+  "listView": "Vista de Lista",
+  "statistics": "Estadísticas",
+  "settings": "Configuración"
+}
