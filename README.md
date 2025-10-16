@@ -1,6 +1,6 @@
-# KevinFlow - Gestor de Tareas Frontend
+# Gestor de Tareas Frontend
 
-KevinFlow es una aplicación web de frontend puro, diseñada para gestionar proyectos y tareas utilizando un tablero Kanban interactivo. Este proyecto fue desarrollado como una solución completa para la planificación y seguimiento de flujos de trabajo, similar a herramientas como Trello o Jira.
+Esta es una aplicación web de frontend puro, diseñada para gestionar proyectos y tareas utilizando un tablero Kanban interactivo. Este proyecto fue desarrollado como una solución completa para la planificación y seguimiento de flujos de trabajo, similar a herramientas como Trello o Jira.
 
 
 ## Objetivo del Proyecto
@@ -35,7 +35,7 @@ El objetivo principal fue construir una interfaz de usuario robusta y completa a
 
 ---
 
-## 🛠️ Tecnologías Utilizadas
+## Tecnologías Utilizadas
 
 - **React:** Biblioteca principal para la construcción de la interfaz de usuario.
 - **React Hooks:** Para el manejo de estado y ciclo de vida (`useState`, `useEffect`, `useMemo`, `useRef`).
@@ -46,7 +46,7 @@ El objetivo principal fue construir una interfaz de usuario robusta y completa a
 
 ---
 
-## 🚀 Cómo Ejecutar el Proyecto
+## Cómo Ejecutar el Proyecto
 
 1.  **Clonar el repositorio:**
     ```bash
