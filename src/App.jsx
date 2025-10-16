@@ -1,31 +1,17 @@
 ﻿import React, { useState, useEffect } from 'react';
 import './App.css';
 import { useKanban } from './hooks/useKanban.js';
-
-// Vistas y Componentes
-import { LeftSidebar } from './components/LeftSidebar.jsx';
-import { RightSidebar } from './components/RightSidebar.jsx';
-import { Header } from './components/Header.jsx';
-import { KanbanBoard } from './components/KanbanBoard.jsx';
-import { ListView } from './components/ListView.jsx';
-import { ProjectsView } from './components/ProjectsView.jsx';
-import { StatisticsView } from './components/StatisticsView.jsx';
-import { SettingsView } from './components/SettingsView.jsx';
+import { LeftSidebar, RightSidebar, Header, KanbanBoard, ListView, ProjectsView, StatisticsView, SettingsView, TaskDetails } from './components';
 
 function App() {
-  const { 
-    projects, 
-    activeProjectId, 
-    setActiveProjectId,
-    users,
-    tags,
-    addProject,
-    addTask,
-    toggleSubtask,
-    updateTask,
-    moveTask
+  const {
+    projects, activeProject, activeProjectId, setActiveProjectId,
+    users, tags, selectedTask, setSelectedTaskId,
+    addProject, addTask, updateTask, deleteTask, toggleSubtask, moveTask, addColumn,
+    addTag, updateTag, deleteTag, addComment, moveColumn,
+    addSubtask, updateSubtask, deleteSubtask
   } = useKanban();
-  
+
   const [view, setView] = useState('projects');
   const [theme, setTheme] = useState('dark');
   const [searchQuery, setSearchQuery] = useState('');
@@ -33,69 +19,79 @@ function App() {
 
   useEffect(() => {
     document.body.className = '';
-    document.body.classList.add(theme + '-mode');
+    document.body.classList.add(theme === 'dark' ? 'dark-mode' : 'light-mode');
   }, [theme]);
 
-  const activeProject = projects.find(p => p.id === activeProjectId);
   const currentUser = users[0];
+  const isActivityPanelVisible = activeProject && (!!selectedTask || isRightSidebarOpen);
+  const layoutClassName = isActivityPanelVisible ? "app-layout-sidebar-open" : "app-layout";
 
   const handleSelectProject = (projectId) => {
     setActiveProjectId(projectId);
-    setView('kanban'); 
+    setSelectedTaskId(null);
+    setView('kanban');
     setIsRightSidebarOpen(true);
   };
-  
-  const filteredProjects = projects.filter(p => 
-    p.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+
+  const handleNavigate = (newView) => {
+    if (newView === 'projects') {
+      setActiveProjectId(null);
+      setSelectedTaskId(null);
+      setIsRightSidebarOpen(false);
+    }
+    setView(newView);
+  };
+
+  const handleProjectNavigation = (direction) => {
+    const currentIndex = projects.findIndex(p => p.id === activeProjectId);
+    if (currentIndex === -1) return;
+    let nextIndex = (direction === 'next')
+        ? (currentIndex + 1) % projects.length
+        : (currentIndex - 1 + projects.length) % projects.length;
+    handleSelectProject(projects[nextIndex].id);
+  };
+
+  const filteredProjects = projects.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
   const renderContent = () => {
-    const projectRequiredMessage = (
-        <div>
-            <h2>Por favor, selecciona un proyecto para continuar.</h2>
-            <button onClick={() => setView('projects')}>Ir a Proyectos</button>
-        </div>
-    );
-
+    if (!activeProject && ['kanban', 'list', 'statistics'].includes(view)) {
+      return <div className="project-required-message"><h2>Selecciona un proyecto para continuar.</h2></div>;
+    }
     switch(view) {
         case 'projects':
             return <ProjectsView projects={filteredProjects} users={users} onSelectProject={handleSelectProject} onAddProject={addProject} />;
         case 'kanban':
-            return activeProject ? <KanbanBoard project={activeProject} users={users} tags={tags} addTask={addTask} toggleSubtask={toggleSubtask} moveTask={moveTask} updateTask={updateTask} /> : projectRequiredMessage;
-        case 'list':
-            // Esta línea está correcta, pasa 'tags' a ListView
-            return activeProject ? <ListView project={activeProject} users={users} tags={tags} toggleSubtask={toggleSubtask} /> : projectRequiredMessage;
-        case 'statistics':
-            return <StatisticsView project={activeProject} allProjects={projects} />;
-        case 'settings':
-            return <SettingsView user={currentUser} theme={theme} setTheme={setTheme} />;
-        default:
-            return <ProjectsView projects={filteredProjects} users={users} onSelectProject={handleSelectProject} onAddProject={addProject} />;
+            return <KanbanBoard project={activeProject} users={users} tags={tags} addTask={addTask} moveTask={moveTask} moveColumn={moveColumn} onSelectTask={setSelectedTaskId} addColumn={addColumn} />;
+        case 'list': return <ListView project={activeProject} users={users} tags={tags} />;
+        case 'statistics': return <StatisticsView project={activeProject} allProjects={projects} />;
+        case 'settings': return <SettingsView user={currentUser} theme={theme} setTheme={setTheme} tags={tags} onAddTag={addTag} onUpdateTag={updateTag} onDeleteTag={deleteTag} />;
+        default: return <ProjectsView projects={filteredProjects} users={users} onSelectProject={handleSelectProject} onAddProject={addProject} />;
     }
-  }
-
-  const layoutClassName = activeProject && isRightSidebarOpen ? "app-layout" : "app-layout-full";
+  };
 
   return (
     <div className={layoutClassName}>
-      <LeftSidebar activeView={view} setActiveView={setView} activeProjectId={activeProjectId} activeProject={activeProject} />
-      <Header 
-        user={currentUser} 
-        onSearch={setSearchQuery}
-        isRightSidebarOpen={isRightSidebarOpen}
-        setIsRightSidebarOpen={setIsRightSidebarOpen}
-        hasActiveProject={!!activeProject}
-      />
-      <main className="app-main-content">
-        {renderContent()}
-      </main>
-
-      <RightSidebar 
-        project={activeProject}
-        users={users}
-        isOpen={isRightSidebarOpen}
-        onClose={() => { setIsRightSidebarOpen(false); setActiveProjectId(null); }}
-      />
+      <LeftSidebar activeView={view} setActiveView={handleNavigate} activeProjectId={activeProjectId} activeProject={activeProject} />
+      <Header user={currentUser} onSearch={setSearchQuery} isActivityPanelOpen={isActivityPanelVisible} setIsRightSidebarOpen={setIsRightSidebarOpen} hasActiveProject={!!activeProject} allProjects={projects} />
+      <main className="app-main-content">{renderContent()}</main>
+      {isActivityPanelVisible && (
+        selectedTask ?
+            <TaskDetails
+                task={selectedTask}
+                users={users}
+                tags={tags}
+                onUpdateTask={updateTask}
+                onDeleteTask={deleteTask}
+                onToggleSubtask={toggleSubtask}
+                onAddComment={addComment}
+                onAddSubtask={addSubtask}
+                onUpdateSubtask={updateSubtask}
+                onDeleteSubtask={deleteSubtask}
+                onClose={() => setSelectedTaskId(null)}
+            />
+         :
+            <RightSidebar project={activeProject} users={users} isOpen={isRightSidebarOpen} onClose={() => handleNavigate('projects')} onNavigateProject={handleProjectNavigation} totalProjects={projects.length} />
+      )}
     </div>
   );
 }

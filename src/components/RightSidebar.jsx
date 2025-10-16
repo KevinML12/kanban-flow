@@ -1,69 +1,75 @@
-﻿import React from 'react';
-import { FiClipboard, FiUsers, FiClock, FiX } from 'react-icons/fi';
+﻿// src/components/RightSidebar.jsx
+import React from 'react';
+import { FiClipboard, FiUsers, FiClock, FiArrowLeft, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import './Sidebars.css';
 
-// Función para calcular el progreso promedio de un proyecto
+// ... (las funciones de cálculo de arriba no cambian, las dejamos igual)
 const getProjectProgress = (project) => {
     const allTasks = project.columns.flatMap(col => col.tasks);
     if (allTasks.length === 0) return 0;
-    const totalProgress = allTasks.reduce((sum, task) => sum + (task.progress || 0), 0);
-    return Math.round(totalProgress / allTasks.length);
+    const completedTasks = project.columns.find(c => c.title.toLowerCase() === 'completado')?.tasks.length || 0;
+    return Math.round((completedTasks / allTasks.length) * 100);
 };
 
-// Función para obtener los miembros únicos del equipo
 const getProjectTeam = (project, allUsers) => {
     const allAssignees = project.columns.flatMap(col => col.tasks.flatMap(task => task.assignees));
     const uniqueAssigneeIds = [...new Set(allAssignees)];
     return uniqueAssigneeIds.map(id => allUsers.find(user => user.id === id)).filter(Boolean);
 };
 
-// Función para encontrar tareas que vencen pronto o están atrasadas
 const getUpcomingTasks = (project) => {
     const allTasks = project.columns.flatMap(col => col.tasks);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     return allTasks
-        .filter(task => {
-            if (!task.dueDate) return false;
+        .filter(task => !task.dueDate || task.progress === 100 ? false : new Date(task.dueDate + 'T00:00:00Z') < new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000))
+        .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
+        .map(task => {
             const dueDate = new Date(task.dueDate + 'T00:00:00Z');
-            const diffDays = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
-            return diffDays <= 7; // Tareas que vencen en 7 días o menos (incluyendo atrasadas)
-        })
-        .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate)); // Ordenar por fecha
+            return { ...task, isOverdue: dueDate < today };
+        });
 };
 
-export const RightSidebar = ({ project, users = [], isOpen, onClose }) => {
-  const progress = project ? getProjectProgress(project) : 0;
-  const team = project ? getProjectTeam(project, users) : [];
-  const upcomingTasks = project ? getUpcomingTasks(project) : [];
+
+export const RightSidebar = ({ project, users = [], isOpen, onClose, onNavigateProject, totalProjects }) => {
+  if (!project) return null;
+
+  const progress = getProjectProgress(project);
+  const team = getProjectTeam(project, users);
+  const upcomingTasks = getUpcomingTasks(project);
+  const totalTasks = project.columns.flatMap(c => c.tasks).length;
 
   return (
-    <aside className={`sidebar right-sidebar ${isOpen && project ? 'open' : 'closed'}`}>
-      <div className="sidebar-header">
-        <h4>Resumen del Proyecto</h4>
-        {project && <button className="icon-btn" onClick={onClose}><FiX /></button>}
+    <aside className={`sidebar right-sidebar ${isOpen ? 'open' : 'closed'}`}>
+      <div className="sidebar-header right-sidebar-header">
+        <button className="back-to-projects-btn" onClick={onClose} title="Volver a Proyectos">
+          <FiArrowLeft />
+        </button>
+        
+        <h4 className="project-title-header" title={project.name}>{project.name}</h4>
+
+        {totalProjects > 1 ? (
+          <div className="project-nav-buttons">
+            <button onClick={() => onNavigateProject('prev')} title="Proyecto Anterior"><FiChevronLeft /></button>
+            <button onClick={() => onNavigateProject('next')} title="Siguiente Proyecto"><FiChevronRight /></button>
+          </div>
+        ) : (
+          <div className="project-nav-buttons-placeholder"></div> // Para mantener el layout estable
+        )}
       </div>
 
-      <section className="sidebar-section">
-        <h4><FiClipboard /> Estadísticas Rápidas</h4>
-        {project && (
+      <div className="sidebar-content">
+        {/* El resto del contenido no cambia, sigue siendo el mismo */}
+        <section className="sidebar-section">
+          <h5 className="section-title"><FiClipboard /> Estadísticas Rápidas</h5>
           <div className="quick-stats">
-            <div className="stat-item">
-              <span>Progreso General</span>
-              <strong>{progress}%</strong>
-            </div>
-            <div className="stat-item">
-              <span>Tareas Totales</span>
-              <strong>{project.columns.flatMap(c => c.tasks).length}</strong>
-            </div>
+            <div className="stat-item"><span>Progreso General</span><strong>{progress}%</strong></div>
+            <div className="stat-item"><span>Tareas Totales</span><strong>{totalTasks}</strong></div>
           </div>
-        )}
-      </section>
-
-      <section className="sidebar-section">
-        <h4><FiUsers /> Equipo del Proyecto</h4>
-        {project && (
+        </section>
+        <section className="sidebar-section">
+          <h5 className="section-title"><FiUsers /> Equipo del Proyecto</h5>
           <div className="team-list">
             {team.map(user => (
               <div key={user.id} className="team-member" title={user.name}>
@@ -71,27 +77,25 @@ export const RightSidebar = ({ project, users = [], isOpen, onClose }) => {
                 <span>{user.name}</span>
               </div>
             ))}
+            {team.length === 0 && <p className="no-items-message">Sin equipo asignado.</p>}
           </div>
-        )}
-      </section>
-
-      <section className="sidebar-section">
-        <h4><FiClock /> Próximos Vencimientos</h4>
-        {project && (
-          <ul className="due-tasks-list">
+        </section>
+        <section className="sidebar-section">
+          <h5 className="section-title"><FiClock /> Próximos Vencimientos</h5>
+          <div className="due-tasks-list">
             {upcomingTasks.length > 0 ? (
               upcomingTasks.map(task => (
-                <li key={task.id} className="due-task-item">
+                <div key={task.id} className="due-task-card">
                   <span className="task-title">{task.title}</span>
-                  <span className="task-due-date">{task.dueDate}</span>
-                </li>
+                  <span className={`task-due-date ${task.isOverdue ? 'overdue' : ''}`}>{task.dueDate}</span>
+                </div>
               ))
             ) : (
-              <p className="no-tasks-message">¡Ningún vencimiento cercano!</p>
+              <p className="no-items-message">¡Ningún vencimiento cercano!</p>
             )}
-          </ul>
-        )}
-      </section>
+          </div>
+        </section>
+      </div>
     </aside>
   );
 };

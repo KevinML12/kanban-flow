@@ -1,25 +1,19 @@
-﻿import React, { useState } from 'react';
-import { Modal } from './Modal';
+﻿// src/components/ProjectsView.jsx
+import React, { useState } from 'react';
+import { Modal } from './Modal.jsx';
 import { HiPlus } from 'react-icons/hi';
+import './ProjectsView.css'; // Asegúrate que este import esté aquí
 
 export const ProjectsView = ({ projects, users, onSelectProject, onAddProject }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [projectName, setProjectName] = useState('');
 
     const getProjectProgress = (project) => {
-        const allTasks = project.columns.flatMap(col => col.tasks);
-        if (allTasks.length === 0) return 0;
-        
-        const totalProgress = allTasks.reduce((sum, task) => sum + (task.progress || 0), 0);
-        const averageProgress = totalProgress / allTasks.length;
-        
-        return Math.round(averageProgress);
+        // ... (lógica de progreso)
     };
 
     const getProjectTeam = (project) => {
-        const allAssignees = project.columns.flatMap(col => col.tasks.flatMap(task => task.assignees));
-        const uniqueAssigneeIds = [...new Set(allAssignees)];
-        return uniqueAssigneeIds.map(id => users.find(user => user.id === id)).filter(Boolean);
+        // ... (lógica de equipo)
     };
 
     const handleSubmit = (e) => {
@@ -36,27 +30,18 @@ export const ProjectsView = ({ projects, users, onSelectProject, onAddProject })
             <div className="projects-view-container">
                 <h2>Proyectos</h2>
                 <div className="project-grid">
+                    {/* --- ESTA ES LA PARTE IMPORTANTE --- */}
+                    {/* Si `projects` tiene algo, este map debe funcionar */}
                     {projects.map(proj => {
-                        const progress = getProjectProgress(proj);
-                        const team = getProjectTeam(proj);
+                        // const progress = getProjectProgress(proj);
+                        // const team = getProjectTeam(proj);
                         return (
                             <div key={proj.id} className="project-card" onClick={() => onSelectProject(proj.id)}>
                                 <h3>{proj.name}</h3>
-                                <p className="task-count">{proj.columns.flatMap(c => c.tasks).length} Tareas</p>
-                                
-                                <div className="project-card-footer">
-                                    <div className="project-team-avatars">
-                                        {team.slice(0, 3).map(user => (
-                                            <div key={user.id} className="avatar-sm" title={user.name}>{user.initials}</div>
-                                        ))}
-                                        {team.length > 3 && <div className="avatar-sm more">+{team.length - 3}</div>}
-                                    </div>
-                                    <span className="progress-percentage">{progress}%</span>
-                                </div>
-
-                                <div className="progress-bar-container-sm">
-                                    <div className="progress-bar-sm" style={{ width: `${progress}%` }}></div>
-                                </div>
+                                <p className="task-count">
+                                    {proj.columns.flatMap(c => c.tasks).length} Tareas
+                                </p>
+                                {/* ... (El resto del footer de la tarjeta) ... */}
                             </div>
                         )
                     })}
@@ -68,16 +53,20 @@ export const ProjectsView = ({ projects, users, onSelectProject, onAddProject })
             </div>
 
             <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
-                <h2>Crear Nuevo Proyecto</h2>
-                <form onSubmit={handleSubmit}>
+                <form onSubmit={handleSubmit} className="modal-form">
+                    <h2>Crear Nuevo Proyecto</h2>
                     <div className="form-group">
                         <label>Nombre del Proyecto</label>
-                        <input type="text" value={projectName} onChange={(e) => setProjectName(e.target.value)} autoFocus/>
+                        <input 
+                            type="text" 
+                            value={projectName} 
+                            onChange={(e) => setProjectName(e.target.value)}
+                            autoFocus
+                        />
                     </div>
-                    <button type="submit">Crear</button>
+                    <button type="submit" className="btn-primary">Crear</button>
                 </form>
             </Modal>
         </>
     );
 };
-

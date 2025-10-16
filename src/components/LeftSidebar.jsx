@@ -1,4 +1,5 @@
-﻿import React from 'react';
+﻿// src/components/LeftSidebar.jsx
+import React from 'react';
 import { FiGrid, FiList, FiHome, FiBarChart2, FiSettings } from 'react-icons/fi';
 import './Sidebars.css';
 import texts from '../i18n/es.json';
@@ -13,10 +14,13 @@ const getProjectInitials = (name) => {
 };
 
 export const LeftSidebar = ({ activeView, setActiveView, activeProjectId, activeProject }) => {
+  // La única verdad para deshabilitar los menús es si hay un proyecto activo o no.
+  // ¡Más claro ni el agua!
   const isProjectViewDisabled = !activeProjectId;
 
   const handleNavigation = (view) => {
-    if (isProjectViewDisabled && (view === 'kanban' || view === 'list' || view === 'statistics')) {
+    // Si los links están deshabilitados, este clic no debe hacer ni madres.
+    if (isProjectViewDisabled && ['kanban', 'list', 'statistics'].includes(view)) {
       return;
     }
     setActiveView(view);
@@ -32,8 +36,8 @@ export const LeftSidebar = ({ activeView, setActiveView, activeProjectId, active
           </>
         ) : (
           <>
-            <div className="logo">QL</div>
-            <span>Quantum Leap</span>
+            <div className="logo">KM</div>
+            <span>GESTOR DE TAREAS</span>
           </>
         )}
       </div>
@@ -66,4 +70,3 @@ export const LeftSidebar = ({ activeView, setActiveView, activeProjectId, active
     </aside>
   );
 };
-
